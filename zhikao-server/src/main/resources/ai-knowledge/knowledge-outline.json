@@ -1,0 +1,174 @@
+{
+  "version": "v1",
+  "note": "小规模结构化知识库。定位是「关键词 + 结构化过滤」的检索，不是向量检索。每个条目围绕一个知识点，包含定义、典型考法、常见错误与先修关系——出题与分析时作为上下文注入，避免模型凭空编造考纲。",
+  "entries": [
+    {
+      "subject": "Java 程序设计",
+      "point": "Java 基础",
+      "prerequisites": [],
+      "definition": "Java 语言的基础语法与语义：标识符与关键字、八种基本类型与包装类、自动装箱拆箱、字符串不可变性、运算符与流程控制、方法重载与可变参数。",
+      "examTips": "常考「final / static / const 的区别」「String 与 StringBuilder 的取舍」「基本类型与包装类的自动转换陷阱」「switch 支持的表达式类型」。判断题多围绕「Java 只有值传递」展开。",
+      "commonErrors": "误以为 final 修饰引用后对象内容不可变（实际是不可重新指向）；把 String 拼接放在循环里导致 O(n²)；混淆 == 与 equals 在包装类上的表现。"
+    },
+    {
+      "subject": "Java 程序设计",
+      "point": "面向对象",
+      "prerequisites": ["Java 基础"],
+      "definition": "封装、继承、多态三大特性及其落地：访问修饰符、构造器与 this/super 调用链、方法重写与重载的区别、抽象类与接口的取舍、内部类与静态嵌套类。",
+      "examTips": "高频考「重写与重载的判定规则」「抽象类能否没有抽象方法」「接口默认方法与静态方法」「初始化顺序：静态块 → 实例块 → 构造器」。多选常考「接口与抽象类的差异」。",
+      "commonErrors": "重写时把访问权限收紧（编译期就报错）；认为构造器可以被继承；忽略父类构造器先于子类实例块执行。"
+    },
+    {
+      "subject": "Java 程序设计",
+      "point": "集合框架",
+      "prerequisites": ["面向对象"],
+      "definition": "List / Set / Map 三大体系的实现与复杂度：ArrayList 与 LinkedList 的随机访问差异、HashMap 的数组+链表+红黑树结构与扩容、TreeMap 的有序性、迭代器与 fail-fast。",
+      "examTips": "常考「HashMap 的 put 流程与扩容阈值 0.75 的来源」「ConcurrentModificationException 的触发条件」「ArrayList 扩容倍数」「为什么重写 equals 必须重写 hashCode」。",
+      "commonErrors": "在 foreach 中直接 remove 元素触发 fail-fast；把 HashMap 当作线程安全容器在多线程写入；用可变对象作 HashMap 的 key。"
+    },
+    {
+      "subject": "Java 程序设计",
+      "point": "异常处理",
+      "prerequisites": ["Java 基础"],
+      "definition": "异常体系（Throwable → Error / Exception → RuntimeException）、受检异常与非受检异常的边界、try-with-resources、finally 与 return 的执行顺序、异常链与自定义异常。",
+      "examTips": "高频考「finally 中有 return 时的返回值」「受检异常必须处理还是声明」「try-with-resources 的关闭顺序（后开先关）」「Error 与 Exception 的区别」。",
+      "commonErrors": "吞异常（catch 后什么都不做）；在 finally 里 return 覆盖 try 的返回值；用异常做流程控制导致性能下降。"
+    },
+    {
+      "subject": "Java 程序设计",
+      "point": "并发编程",
+      "prerequisites": ["集合框架"],
+      "definition": "线程生命周期、synchronized 与 Lock 的差异、volatile 的可见性与有序性、线程池的核心参数与拒绝策略、JMM 与 happens-before、CAS 与原子类。",
+      "examTips": "常考「synchronized 锁升级过程」「volatile 为什么不能保证原子性」「线程池参数与执行流程（核心线程 → 队列 → 最大线程 → 拒绝策略）」「死锁的四个必要条件」。",
+      "commonErrors": "用 Executors 创建无界队列线程池导致 OOM；以为 volatile 能替代锁；在双重检查单例中漏掉 volatile。"
+    },
+    {
+      "subject": "Java 程序设计",
+      "point": "JVM",
+      "prerequisites": ["异常处理"],
+      "definition": "运行时数据区（堆、虚拟机栈、本地方法栈、方法区/元空间、程序计数器）、对象创建与内存布局、垃圾回收算法与常见收集器、类加载过程与双亲委派模型。",
+      "examTips": "常考「哪些区域线程私有」「双亲委派的作用与打破场景」「CMS 与 G1 的差异」「栈溢出与堆溢出的触发条件」。",
+      "commonErrors": "把永久代与元空间混为一谈；认为 GC 能解决内存泄漏（引用仍可达时无用）；混淆内存泄漏与内存溢出。"
+    },
+    {
+      "subject": "数据结构",
+      "point": "线性表",
+      "prerequisites": [],
+      "definition": "顺序表与链表的存储结构差异、单链表/双链表/循环链表的操作复杂度、栈与队列的经典实现、约瑟夫环与链表的快慢指针技巧。",
+      "examTips": "常考「插入删除的时间复杂度对比」「如何判断链表有环（Floyd 判圈）」「用两个栈实现队列」「顺序表插入的平均移动次数」。",
+      "commonErrors": "删除结点时忘记释放或断链顺序颠倒；把链表随机访问当作 O(1)；循环队列的队满条件与元素个数计算写错。"
+    },
+    {
+      "subject": "数据结构",
+      "point": "树与二叉树",
+      "prerequisites": ["线性表"],
+      "definition": "二叉树的顺序与链式存储、四种遍历（先/中/后/层序）、完全二叉树的性质与编号规律、二叉排序树、平衡二叉树（AVL）的旋转、哈夫曼树与带权路径长度。",
+      "examTips": "常考「由两种遍历序列还原二叉树」「完全二叉树叶子结点数计算」「AVL 的四种旋转类型（LL/RR/LR/RL）」「哈夫曼编码的构造过程」。",
+      "commonErrors": "只给先序与后序无法唯一确定二叉树却强行还原；把平衡因子算成左右子树高度之和；混淆满二叉树与完全二叉树。"
+    },
+    {
+      "subject": "数据结构",
+      "point": "图",
+      "prerequisites": ["树与二叉树"],
+      "definition": "图的邻接矩阵与邻接表存储、DFS 与 BFS 遍历、最小生成树（Prim / Kruskal）、最短路径（Dijkstra / Floyd）、拓扑排序与关键路径。",
+      "examTips": "常考「Prim 与 Kruskal 的适用场景（稠密图 vs 稀疏图）」「Dijkstra 为什么不能处理负权」「拓扑排序判环」「AOE 网的关键路径计算」。",
+      "commonErrors": "在有向图中直接套用无向图的最小生成树结论；忘记 Dijkstra 的负权限制；拓扑排序时忽略入度更新的时机。"
+    },
+    {
+      "subject": "数据结构",
+      "point": "查找与排序",
+      "prerequisites": ["线性表", "树与二叉树"],
+      "definition": "顺序查找与折半查找、哈希表与冲突处理（开放定址 / 链地址法）、B 树与 B+ 树、各排序算法的时间/空间复杂度与稳定性、快排的分治与堆排的建堆过程。",
+      "examTips": "最高频考「各排序算法的稳定性」「快排最坏 O(n²) 的触发条件与优化」「堆排序建堆的复杂度 O(n)」「哈希表装填因子与平均查找长度」。",
+      "commonErrors": "把快排说成稳定排序；混淆折半查找要求（必须有序且顺序存储）；B+ 树与 B 树的数据存放位置记反。"
+    },
+    {
+      "subject": "数据库原理",
+      "point": "SQL 与关系代数",
+      "prerequisites": [],
+      "definition": "关系模型基础、五种基本关系运算、SQL 的 DDL/DML/DCL 分类、多表连接（内连接 / 左外连接 / 自连接）、子查询与 EXISTS、聚合与分组过滤的执行顺序。",
+      "examTips": "常考「WHERE 与 HAVING 的区别」「LEFT JOIN 中 ON 与 WHERE 条件的差异（这是经典陷阱题）」「NULL 参与比较与聚合的行为」「IN 与 EXISTS 的适用场景」。",
+      "commonErrors": "把过滤条件写在 WHERE 里导致左连接退化成内连接；用 = NULL 判断空值（应为 IS NULL）；GROUP BY 后引用未分组且未聚合的列。"
+    },
+    {
+      "subject": "数据库原理",
+      "point": "索引与优化",
+      "prerequisites": ["SQL 与关系代数"],
+      "definition": "B+ 树索引结构、聚簇索引与非聚簇索引、最左前缀原则、覆盖索引与回表、执行计划分析（type / key / rows / Extra）、索引失效的常见场景。",
+      "examTips": "高频考「为什么用 B+ 树而不是 B 树或哈希」「最左前缀原则下的复合索引设计」「什么情况会索引失效（函数、隐式转换、前导模糊）」「回表与覆盖索引」。",
+      "commonErrors": "在区分度极低的列（如性别）上单独建索引；给每个查询都加索引导致写入变慢；对索引列使用函数后仍以为走了索引。"
+    },
+    {
+      "subject": "数据库原理",
+      "point": "事务与并发控制",
+      "prerequisites": ["索引与优化"],
+      "definition": "ACID 四大特性、四种隔离级别与对应异常（脏读 / 不可重复读 / 幻读）、MVCC 与版本链、行锁与间隙锁、死锁检测与回滚、日志与崩溃恢复（redo / undo）。",
+      "examTips": "必考「隔离级别与异常的对应关系」「MySQL 默认隔离级别（可重复读）以及它如何用间隙锁避免幻读」「MVCC 的 ReadView 生成时机」「两阶段锁协议」。",
+      "commonErrors": "认为可重复读下完全没有幻读；把 undo log 当成回滚以外的用途；忽略长事务导致的版本链膨胀。"
+    },
+    {
+      "subject": "计算机网络",
+      "point": "TCP 与 UDP",
+      "prerequisites": [],
+      "definition": "传输层协议对比、三次握手与四次挥手、可靠传输机制（序号确认、超时重传、滑动窗口、流量控制）、拥塞控制（慢启动 / 拥塞避免 / 快重传 / 快恢复）、TIME_WAIT 的意义。",
+      "examTips": "最高频考「为什么是三次握手而不是两次」「四次挥手为什么 TIME_WAIT 等待 2MSL」「粘包与拆包的成因和解决」「TCP 与 UDP 的适用场景对比」。",
+      "commonErrors": "把三次握手说成「为了确认双方收发能力」而忽略防历史连接；认为 UDP 一定比 TCP 快；忽略 Nagle 算法对实时性的影响。"
+    },
+    {
+      "subject": "计算机网络",
+      "point": "HTTP 与 HTTPS",
+      "prerequisites": ["TCP 与 UDP"],
+      "definition": "HTTP 报文结构、方法语义与幂等性、状态码分类、缓存机制（强缓存 / 协商缓存）、Cookie 与 Session、HTTP/1.1 与 HTTP/2 与 HTTP/3 的演进、HTTPS 的握手与证书链。",
+      "examTips": "常考「GET 与 POST 的本质差异」「301 与 302 的区别」「强缓存与协商缓存的头部字段」「HTTPS 混合加密为什么同时用非对称与对称」。",
+      "commonErrors": "认为 POST 一定比 GET 安全；混淆 Cache-Control 与 ETag 的作用层次；忽略 HTTP/2 的多路复用解决的是队头阻塞（应用层）。"
+    },
+    {
+      "subject": "计算机网络",
+      "point": "网络分层与 IP",
+      "prerequisites": [],
+      "definition": "OSI 七层与 TCP/IP 四层模型对应关系、IP 地址分类与子网划分、CIDR、NAT、ARP 与路由选择、ICMP 与 ping / traceroute 的原理。",
+      "examTips": "常考「子网划分与可用主机数计算」「ARP 在同一网段与跨网段的差异」「NAT 的地址转换过程」「ping 依赖的协议层次」。",
+      "commonErrors": "把可用主机数按 2^n 计算而漏减网络号与广播地址；认为 ARP 可以跨网段直接解析；混淆交换机与路由器的工作层次。"
+    },
+    {
+      "subject": "操作系统",
+      "point": "进程与线程",
+      "prerequisites": [],
+      "definition": "进程与线程的区别、进程状态转换、PCB 与上下文切换开销、进程间通信（管道 / 消息队列 / 共享内存 / 信号量 / socket）、线程同步与临界区、死锁的必要条件与预防。",
+      "examTips": "常考「进程与线程的资源归属」「上下文切换为什么会成为性能瓶颈」「五种 IPC 的适用场景」「死锁的四个必要条件与破坏方式」。",
+      "commonErrors": "认为线程切换没有开销；把进程间通信与线程间通信混为一谈（线程共享地址空间）；忽略用户态与内核态切换的成本。"
+    },
+    {
+      "subject": "操作系统",
+      "point": "内存管理",
+      "prerequisites": ["进程与线程"],
+      "definition": "分页与分段、虚拟内存与地址转换（MMU、页表、TLB）、页面置换算法（FIFO / LRU / Clock）、缺页中断处理、局部性原理与工作集、内存碎片与紧凑。",
+      "examTips": "高频考「LRU 与 FIFO 的缺页次数比较（Belady 异常）」「多级页表为什么能省空间」「TLB 命中对访问时间的影响计算」「内碎片与外碎片的区分」。",
+      "commonErrors": "把 LRU 当成最优算法（OPT 才是理论最优）；忽略 TLB 未命中时还要访存两次；混淆页表的层级与地址位数关系。"
+    },
+    {
+      "subject": "软件工程",
+      "point": "软件过程模型",
+      "prerequisites": [],
+      "definition": "瀑布模型、原型模型、增量与迭代模型、螺旋模型、敏捷与 Scrum 的角色与会议、DevOps 与持续交付的实践边界、CMMI 成熟度等级。",
+      "examTips": "常考「各模型的适用场景与风险点」「敏捷宣言的四条价值观」「Scrum 三个角色与四个会议」「需求变更为什么在瀑布模型里代价最高」。",
+      "commonErrors": "把敏捷等同于「没有文档」；认为迭代模型可以完全不做需求分析；混淆增量（分批交付功能）与迭代（反复完善同一功能）。"
+    },
+    {
+      "subject": "软件工程",
+      "point": "需求与 UML",
+      "prerequisites": ["软件过程模型"],
+      "definition": "需求获取方法、功能性与非功能性需求的区分、用例图与用例规约、类图与关系（关联 / 聚合 / 组合 / 泛化 / 实现）、时序图与活动图、需求跟踪矩阵。",
+      "examTips": "常考「聚合与组合的区别（生命周期是否一致）」「用例之间的关系（包含 / 扩展 / 泛化）」「给场景画类图与时序图」「非功能性需求举例（性能、安全、可用性）」。",
+      "commonErrors": "把聚合与组合搞反；用例粒度切分过细（把步骤当用例）；把接口当成类图的独立元素。"
+    },
+    {
+      "subject": "软件工程",
+      "point": "测试与质量",
+      "prerequisites": ["需求与 UML"],
+      "definition": "测试层次（单元 / 集成 / 系统 / 验收）、黑盒与白盒方法（等价类、边界值、判定表、语句与分支覆盖）、回归测试策略、缺陷生命周期、测试金字塔与自动化取舍。",
+      "examTips": "高频考「边界值分析如何取点（上点 / 离点 / 内点）」「语句覆盖与分支覆盖的强度关系」「集成测试的自顶向下与自底向上区别」「测试金字塔为何强调单元测试比重」。",
+      "commonErrors": "把等价类与边界值混为一谈；认为分支覆盖能发现所有逻辑错误；忽略回归测试在持续交付中的成本。"
+    }
+  ]
+}

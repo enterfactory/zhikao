@@ -1,0 +1,99 @@
+/**
+ * 基础重置 + 全局观感。
+ * 只做必要的事：盒模型、默认边距、滚动条、字体平滑——
+ * 不做大规模 normalize（Element-Plus 已经处理了大部分表单类重置）。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: var(--zk-font-base);
+  line-height: 1.6;
+  color: var(--zk-text-primary);
+  background: var(--zk-bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding-left: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--zk-primary);
+  text-decoration: none;
+}
+
+/* ===== 滚动条美化：默认滚动条在浅色页面里很突兀 ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5d9e0;
+  border-radius: var(--zk-radius-round);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b9bfc9;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d5d9e0 transparent;
+}
+
+/* ===== 焦点可见：键盘用户必须能看出焦点在哪（无障碍要求） ===== */
+:focus-visible {
+  outline: 2px solid var(--zk-primary);
+  outline-offset: 2px;
+  border-radius: var(--zk-radius-sm);
+}
+
+/* ===== 全局降级（动效清单第 14 条） =====
+   系统开启「减弱动态效果」时，统一把动画时长压到 0——
+   比逐个组件写 media query 更不容易漏，也保证不会有动画残留。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

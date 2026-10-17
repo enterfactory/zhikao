@@ -1,0 +1,176 @@
+/**
+ * 动效关键帧与工具类（对应设计文档「动效清单」14 条）。
+ *
+ * 两条硬约束：
+ * 1. **只动 transform 与 opacity** —— 这两个属性走 GPU 合成层，不触发重排/重绘；
+ *    用 width/height/top/left 做动画会在低端机上明显掉帧。
+ *    （唯一例外是侧边栏折叠，布局宽度变化无法避免，见 layout 组件里的注释。）
+ * 2. **时长全部取自 Token** —— 避免出现 0.2s / 200ms / 0.15s 混用。
+ */
+
+/* ===== 关键帧 ===== */
+
+/* 1. 淡入 */
+@keyframes zk-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 2. 向上滑入（路由切换、卡片入场） */
+@keyframes zk-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 3. 缩放入场（弹窗、选中反馈） */
+@keyframes zk-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 4. 骨架屏扫光 */
+@keyframes zk-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 5. 呼吸脉冲（倒计时告急） */
+@keyframes zk-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.04);
+  }
+}
+
+/* 6. 三点脉冲（AI 思考中） */
+@keyframes zk-dot-pulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 7. 从左滑入（答题页题目切换） */
+@keyframes zk-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 8. 指示条展开（菜单选中项） */
+@keyframes zk-bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* 9. 进度条推进（顶部路由进度条） */
+@keyframes zk-progress-grow {
+  0% { transform: scaleX(0); }
+  60% { transform: scaleX(0.7); }
+  100% { transform: scaleX(0.95); }
+}
+
+/* 10. 光标闪烁（流式打字机） */
+@keyframes zk-caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ===== 工具类：动效清单逐条可验收 ===== */
+
+/* 1. 路由切换过渡
+   重要修正（三期）：原来是 opacity + translateY(8px)、时长 base(240ms)。
+   它和页面内的入场动画叠加后，观感就是「点了菜单以后整块内容重新加载了一遍」——
+   用户实际反馈的正是这一点。
+   现在改为**纯透明度 + 极短时长**：
+   - 离开 80ms：旧内容快速淡出，避免出现「两页都不在」的空档过长；
+   - 进入 140ms：新内容淡入，只表达「内容换掉了」，不再表达「页面打开了」。
+   页面级的「登场」感交给首页/看板的卡片 stagger，不再由每次路由切换承担。 */
+.zk-route-enter-active {
+  transition: opacity 140ms var(--zk-ease);
+}
+.zk-route-leave-active {
+  transition: opacity 80ms var(--zk-ease);
+}
+.zk-route-enter-from,
+.zk-route-leave-to {
+  opacity: 0;
+}
+
+/* 4. 页面首屏卡片入场（stagger 由内联 animation-delay 控制） */
+.zk-enter-up {
+  animation: zk-slide-up var(--zk-duration-slow) var(--zk-ease) both;
+}
+
+.zk-fade-in {
+  animation: zk-fade-in var(--zk-duration-base) var(--zk-ease) both;
+}
+
+.zk-scale-in {
+  animation: zk-scale-in var(--zk-duration-base) var(--zk-ease-out-back) both;
+}
+
+/* 7. 答题页题目切换 */
+.zk-question-in {
+  animation: zk-slide-in-right var(--zk-duration-base) var(--zk-ease) both;
+}
+
+/* 10. 倒计时告急脉冲 */
+.zk-pulse {
+  animation: zk-pulse 1s var(--zk-ease) infinite;
+}
+
+/* 12. AI 思考中三点 */
+.zk-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: zk-dot-pulse 1.2s infinite ease-in-out;
+}
+.zk-dot:nth-child(2) { animation-delay: 0.16s; }
+.zk-dot:nth-child(3) { animation-delay: 0.32s; }
+
+/* 流式打字光标 */
+.zk-caret::after {
+  content: '▍';
+  margin-left: 2px;
+  animation: zk-caret-blink 1s step-end infinite;
+  color: var(--zk-primary);
+}
+
+/* 交互基线：所有可点击元素统一给过渡，避免「有的有反馈有的没有」 */
+.zk-hover-lift {
+  transition: transform var(--zk-duration-fast) var(--zk-ease),
+    box-shadow var(--zk-duration-fast) var(--zk-ease);
+}
+.zk-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--zk-shadow-md);
+}

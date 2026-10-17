@@ -1,0 +1,156 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api   # 所有后端接口统一前缀 /api，与前端 baseURL 对齐
+
+spring:
+  flyway:
+    enabled: false # PostgreSQL 专用迁移由 postgres profile 显式开启
+  application:
+    name: zhikao-server
+  profiles:
+    active: ${ZHIKAO_PROFILE:ecs} # 默认使用独立本地环境；生产显式指定 postgres / prod
+  # 文件上传限制（三期）：Spring 默认单文件上限只有 1MB，
+  # 试卷附件/Excel 导入必然超；这里与 UploadProperties 的分类上限对齐并留出余量。
+  # 七期采集文档后再次放宽：扫描版 PDF/Word 单份可到几十 MB（各业务分类仍有自己的更严上限，
+  # 这里是「容器级」天花板，放宽它不会让别的分类变得更好斗）。
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 300MB   # 一次批量上传最多 20 份文档的余量
+      file-size-threshold: 1MB   # 超过 1MB 落临时文件，避免大文件常驻堆内存
+
+# MyBatis-Plus
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+# Sa-Token 基础配置（timeout 按环境在 profile 中覆写）
+sa-token:
+  token-name: satoken        # 前端请求头需携带此名称的 token
+  is-concurrent: true        # 是否允许并发登录
+  is-share: true             # 同端是否共享 token（互斥登录）
+
+# AI 增强（基于 AgentScope ReActAgent 调用 OpenAI 兼容大模型）
+# 说明：
+#   1. 项目不内置任何模型凭据。未配置 api-key 时，智能出题 / 辅助阅卷返回明确的「未启用」提示
+#      （不会伪造结果）；错题分析的知识点统计部分不依赖大模型，始终可用。
+#   2. api-key 只从环境变量 ZHIKAO_AI_API_KEY 读取，配置文件里不保留任何默认值。
+#      本机调试注入环境变量，生产由 docker-compose 从 .env 注入，两边都不进版本库。
+#   3. 关键：agentscope-core 未内置具体模型实现，必须引入 agentscope-extensions-model-openai
+#      （已在 pom 中声明），DeepSeek 由该扩展的 compat.deepseek.DeepSeekModelProvider 提供，
+#      底层复用 OpenAIChatModel 对接 OpenAI 兼容接口。
+zhikao:
+  ai:
+    enabled: ${ZHIKAO_AI_ENABLED:true}
+    api-key: ${ZHIKAO_AI_API_KEY:}
+    base-url: https://api.deepseek.com/v1
+    model: deepseek:deepseek-chat                # 格式「提供方:模型名」，由 AgentScope 的 SPI 提供方解析
+    timeout-seconds: 60
+  # 慢 SQL 阈值（毫秒）：MyBatis 拦截器记录超过该耗时的语句，用于反向建索引
+  slow-sql-threshold-ms: 300
+  # 文件存储（三期）：默认落在项目下的 data/uploads，生产应改到独立数据盘
+  upload:
+    dir: ${ZHIKAO_UPLOAD_DIR:./data/uploads}
+    max-bytes: 20971520        # 全局兜底上限 20MB（各分类还有更细的限制）
+    inline-preview: true       # 图片/PDF 直接内联预览，其他类型强制下载
+  # 异常详情是否回传前端：默认 false，避免内部术语（如堆栈里的类名）泄露给用户
+  error:
+    expose-detail: false
+  # 安全加固（二期）
+  security:
+    password-min-length: 8
+    password-require-mixed: true
+    login-max-fail-per-account: 5   # 同账号连续失败 5 次锁定
+    login-max-fail-per-ip: 20       # 同 IP 连续失败 20 次限制
+    login-lock-minutes: 15
+    ai-daily-limit-per-user: 200    # 未配置角色额度时的兜底值
+    # AI 按角色配额：学生高频轻量、教师低频重量，用同一个数字约束两者必然顾此失彼
+    ai-daily-limit-by-role:
+      student: 30
+      teacher: 100
+      subject_lead: 100
+      edu_admin: 300
+      admin: 300
+      super_admin: 300
+  # 考试相关（三期：超时收卷与防作弊阈值）
+  exam:
+    timeout-scan-delay-ms: 60000         # 超时收卷扫描间隔
+    timeout-scan-initial-delay-ms: 30000 # 启动后延迟，避免抢在应用就绪前扫描
+    timeout-scan-limit: 200              # 单次扫描收卷上限
+    cheat-warn-threshold: 3              # 达到该次数开始警告学生
+    cheat-serious-threshold: 10          # 达到该次数视为严重异常（教师介入）
+    cheat-force-submit: false            # 严重异常是否自动收卷：默认关闭，处置权留给人
+  # 文档采集与清洗（七期：删掉网页爬虫，采集入口收敛为「本地目录 + 文档上传」）
+  crawler:
+    # 本地目录白名单根：LOCAL_DIR 采集 / 本地导入只允许访问这些根目录之下的路径（防越权读盘）。
+    # 相对路径以 zhikao-server 为基准解析；这里默认放开项目内的「题目资源/」目录。
+    # 摄取目录（上传落盘处）由 LocalPathGuard 自动加入白名单，不必在这里重复配置。
+    allowed-roots:
+      - ../题目资源
+    # 上传文档的落盘根目录：按天分层（/yyyyMMdd/），「哪天传了什么」在磁盘上一眼可查
+    ingest-dir: ${ZHIKAO_CRAWL_INGEST_DIR:./data/crawl-ingest}
+    # 单份文档体积上限：PDF/扫描件比表格大得多，50MB 足够，同时挡住把整本教材塞进一次 OCR
+    max-doc-bytes: 52428800
+    # 富文本配图镜像（六期任务#19）：内联图片仍要按 UA/超时/体积下载，与采集文档是两条独立通道
+    user-agent: "ZhikaoBot/1.0 (exam-bank research)"
+    image-timeout-ms: 10000
+    image-max-bytes: 5242880   # 单张 5MB，超限保留原 URL 并打 IMG_MIRROR_FAILED
+    # OCR：双通道。「离线」RapidOCR（ONNX，随包分发，不出网）、「云端」Qwen-VL-OCR（DashScope 兼容接口）
+    ocr:
+      # auto=优先离线、离线不可用时回退云端；rapid=只用离线；qwen=只用云端
+      engine: ${ZHIKAO_OCR_ENGINE:auto}
+      # 单份文档最多 OCR 的页数：OCR 是整条流水线里最慢的一步，超出即截断并留痕
+      max-pages: 60
+      # 扫描版 PDF 的渲染分辨率：200dpi 是「识别率够用、单页 PNG 不至于太大」的经验值
+      pdf-dpi: 200
+      # 每页平均非空白字符低于该值就判为「无文字层」，转而走 OCR
+      # （阈值不能设 1：一份只有水印/页脚的 PDF 会被误认为有正文）
+      pdf-min-chars-per-page: 20
+      # 公式片段回插：试卷 PDF 的数学公式多为「内联图片」，文本层里没有对应字符，
+      # 题干读得出、式子凭空消失。这里保留文本层不动，只把那些小图单独重认一次插回原位。
+      # 级联同整页一致：本地先认，不够可信再升级云端（云端按次计费，故有 max-cloud-per-document）。
+      formula:
+        enabled: true
+        # 判定「这是公式而不是题图」的放置尺寸闸（单位 pt）：行内公式通常在 10~40pt 高
+        max-height: 48
+        max-width: 160
+        min-height: 4
+        min-width: 4
+        # 单份文档的片段上限与其中云端调用上限：成本与耗时的双闸门
+        max-per-document: 200
+        max-cloud-per-document: 30
+        # 本地识别置信度低于该值就升级云端；公式全是符号上下标，0.85 以下基本是在猜
+        escalate-below: 0.85
+        # 片段放大倍数：几十像素的小图直接送 OCR 认不出来，先放大再补白边
+        upscale: 2
+        # 识别文本长度上限：超出的多半是模型在解释题目，不是公式本身，整条丢弃
+        max-output-chars: 160
+      qwen:
+        # 云端通道需要自己的 key：未配 key 时面板显示「不可用」，不会伪造识别结果
+        enabled: ${ZHIKAO_QWEN_OCR_ENABLED:false}
+        api-key: ${ZHIKAO_QWEN_API_KEY:}
+        base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        model: qwen-vl-ocr
+        timeout-seconds: 60
+  # 数据维护（三期：给只增不减的表装上出口）
+  maintain:
+    cron: "0 15 3 * * *"    # 每天凌晨 3:15
+    oper-log-days: 90       # 操作日志保留天数（覆盖一个学期的追溯需求）
+    ai-task-days: 90        # AI 调用留痕保留天数（按季度核算成本足够）
+    export-file-days: 7     # 导出产物保留天数（临时物，最容易占磁盘）
+
+# 日志格式：带链路号，一次请求的多行日志可直接 grep 串联
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{traceId:-no-trace}] %logger{36} - %msg%n"
+
+# Actuator：健康检查与运行指标（health/info 已加入 Sa-Token 白名单）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

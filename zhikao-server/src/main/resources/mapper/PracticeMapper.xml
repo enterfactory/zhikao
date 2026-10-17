@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhikao.mapper.PracticeMapper">
+ <sql id="tags">LEFT JOIN LATERAL (
+ SELECT CONCAT('kp:',k.kp_id) AS topic_key,k.name AS topic FROM paper_question_knowledge k WHERE k.paper_question_id=pq.id
+ UNION ALL
+ SELECT CONCAT('legacy:',p.subject_id,':',TRIM(label)),TRIM(label)
+ FROM regexp_split_to_table(COALESCE(NULLIF(TRIM(pq.knowledge_point),''),'综合巩固'),'[,，;；|]') label
+ WHERE TRIM(label)!='' AND NOT EXISTS(SELECT 1 FROM paper_question_knowledge k WHERE k.paper_question_id=pq.id)
+ ) tags ON TRUE</sql>
+ <select id="topics" resultType="map">SELECT tags.topic_key,tags.topic,s.subject_name,COUNT(DISTINCT pq.id) AS total
+ FROM paper_question pq JOIN paper p ON p.id=pq.paper_id JOIN subject s ON s.id=p.subject_id
+ JOIN exam e ON e.paper_id=pq.paper_id JOIN exam_student es ON es.exam_id=e.id
+ <include refid="tags"/>
+ WHERE es.student_id=#{userId} AND es.status=3 AND e.release_status=2 AND e.end_time&lt;=CURRENT_TIMESTAMP
+ GROUP BY tags.topic_key,tags.topic,s.subject_name ORDER BY s.subject_name,tags.topic</select>
+ <select id="available" resultType="map">SELECT DISTINCT ON (pq.id) pq.id,pq.content,pq.options,pq.type,pq.answer,pq.analysis,pq.knowledge_point,e.exam_name
+ FROM paper_question pq JOIN paper p ON p.id=pq.paper_id JOIN exam e ON e.paper_id=pq.paper_id JOIN exam_student es ON es.exam_id=e.id
+ JOIN exam_answer ea ON ea.exam_student_id=es.id AND ea.paper_question_id=pq.id
+ <include refid="tags"/>
+ WHERE es.student_id=#{userId} AND es.status=3 AND e.release_status=2 AND e.end_time&lt;=CURRENT_TIMESTAMP
+ <if test="topic != null and topic != ''">AND (tags.topic_key=#{topic} OR tags.topic=#{topic})</if>
+ <if test="wrongOnly">AND ea.marked=1 AND (ea.correct=0 OR ea.score&lt;pq.score)</if>
+ ORDER BY pq.id,e.end_time DESC,e.id DESC LIMIT 30</select>
+ <insert id="create">INSERT INTO practice_session(id,user_id,topic,created_at) VALUES(#{id},#{userId},#{topic},CURRENT_TIMESTAMP)</insert>
+ <insert id="addItem">INSERT INTO practice_item(id,session_id,snapshot_id,content,options,type,standard_answer,analysis,knowledge_point,source_name)
+ VALUES(#{id},#{sessionId},#{q.id},#{q.content},#{q.options},#{q.type},#{q.answer},#{q.analysis},#{q.knowledge_point},#{q.exam_name})</insert>
+ <select id="items" resultType="map">SELECT id,content,options,type,knowledge_point,source_name,actual_answer,correct,answered_at,standard_answer,analysis FROM practice_item WHERE session_id=#{id} ORDER BY snapshot_id,id</select>
+ <select id="item" resultType="map">SELECT * FROM practice_item WHERE id=#{id} AND session_id=#{sessionId}</select>
+ <update id="answer">UPDATE practice_item SET actual_answer=#{answer},correct=#{correct},answered_at=CURRENT_TIMESTAMP WHERE id=#{id}</update>
+ <select id="history" resultType="map">SELECT i.knowledge_point,i.correct,i.answered_at,s.id AS session_id,s.topic FROM practice_item i JOIN practice_session s ON s.id=i.session_id WHERE s.user_id=#{userId} AND i.answered_at IS NOT NULL ORDER BY i.answered_at DESC LIMIT 30</select>
+ <select id="require" resultType="string">SELECT id FROM practice_session WHERE id=#{id} AND user_id=#{userId}<if test="lock"> FOR UPDATE</if></select>
+</mapper>

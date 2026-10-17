@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Spring Boot 父工程：统一依赖与插件版本 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.zhikao</groupId>
+    <artifactId>zhikao-server</artifactId>
+    <version>1.0.0</version>
+    <name>zhikao-server</name>
+    <description>智考在线 · 在线考试与自动阅卷系统（后端）</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <flyway.version>11.15.0</flyway.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 本机 JDK 23：Boot 3.3.5 管理的 lombok 1.18.34 注解处理器在 JDK 23 上失效
+             （builder()/构造器不生成），显式升级到支持 JDK 23 的版本 -->
+        <lombok.version>1.18.38</lombok.version>
+        <!-- JDK 21+ 起 classpath 注解处理默认关闭、23 彻底停用：必须显式开启，否则 lombok 不生成代码 -->
+        <maven.compiler.proc>full</maven.compiler.proc>
+        <!-- 第三方依赖版本统一管理，便于集中升级 -->
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <sa-token.version>1.45.0</sa-token.version>
+        <knife4j.version>4.5.0</knife4j.version>
+        <hutool.version>5.8.32</hutool.version>
+        <jbcrypt.version>0.4</jbcrypt.version>
+        <!-- Apache POI：Excel 读写（阶段2 用户批量导入 / 模板下载，阶段3 题目导入复用） -->
+        <poi.version>5.2.5</poi.version>
+        <!-- AgentScope Java：AI 增强模块底层框架，最新稳定版 2.0.3，要求 JDK17+ -->
+        <agentscope.version>2.0.3</agentscope.version>
+        <!-- 文档摄取（七期重构）：PDF 文本层抽取 + OCR。
+             rapidocr 核心是 0.0.7，但它把「原生库+模型」拆成平台包并按 1.2.2 发版，
+             版本由 rapidocr-java 父 pom 的 dependencyManagement 管，无需在此重复声明。 -->
+        <pdfbox.version>3.0.8</pdfbox.version>
+        <rapidocr.version>0.0.7</rapidocr.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <!-- Web 开发 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- 参数校验（@Valid） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- AOP：操作日志切面（@OperLog）依赖 AspectJ 织入 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!-- Actuator：健康检查与运行指标（二期可观测性） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- MyBatis-Plus：Spring Boot 3 专用 starter -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <!-- Sa-Token：登录认证、角色与路由鉴权（注意 groupId 为 cn.dev33，非 cn.dev33.satoken） -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot3-starter</artifactId>
+            <version>${sa-token.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL is the single supported database. SQL access uses MyBatis-Plus. -->
+
+        <!-- Redis is required for shared authentication and security state in ECS profiles. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Sa-Token 会话的 Redis 实现。
+             artifactId 说明：1.4x 起 Sa-Token 换了 Redis 插件的命名体系，
+             SaTokenDaoForRedisTemplate 由 sa-token-redis-template 提供；
+             老的 sa-token-dao-redis-jackson 最高只到 1.34.0，
+             sa-token-redis-jackson 在 1.45.0 下是个空的 relocation 包
+             ——依赖解析成功、jar 里却没有任何 class，这种坑只有到引用类时才会暴露。
+             它的 init(RedisConnectionFactory) 支持复用应用自己的 Redis 连接，
+             所以不需要为会话再配一套独立的 Redis。 -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-redis-template</artifactId>
+            <version>${sa-token.version}</version>
+        </dependency>
+
+        <!-- Knife4j：API 文档（基于 SpringDoc / OpenAPI3，Jakarta 版） -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <version>${knife4j.version}</version>
+        </dependency>
+
+        <!-- Hutool：通用工具 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
+        </dependency>
+        <!-- jBCrypt：密码加密（登录比对使用） -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>${jbcrypt.version}</version>
+        </dependency>
+
+        <!-- Apache POI：Excel 读写（批量导入 / 模板下载）+ Word 文档摄取（七期 .docx） -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <!-- POI scratchpad：老 .doc（HWPF）文本抽取；.docx 已由 poi-ooxml 覆盖 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- PDFBox：PDF 文本层抽取；无文本层（扫描件）时由 PDFRenderer 渲染成图再走 OCR -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!-- RapidOCR（PaddleOCR 的 ONNX 推理版）Java 封装：离线 OCR，
+             原生库与模型随 rapidocr-onnx-platform 按当前 OS 打包进 jar，运行期不下载、不触网 -->
+        <dependency>
+            <groupId>io.github.mymonstercat</groupId>
+            <artifactId>rapidocr</artifactId>
+            <version>${rapidocr.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.mymonstercat</groupId>
+            <artifactId>rapidocr-onnx-platform</artifactId>
+            <version>${rapidocr.version}</version>
+        </dependency>
+
+        <!-- AgentScope Java：AI 增强模块底层框架（Agent 编排、工具调用、RAG、记忆、流式） -->
+        <dependency>
+            <groupId>io.agentscope</groupId>
+            <artifactId>agentscope-core</artifactId>
+            <version>${agentscope.version}</version>
+        </dependency>
+
+        <!-- AgentScope OpenAI 兼容模型扩展。
+             注意：agentscope-core 并未内置具体模型实现（DeepSeek credential 会抛
+             "DeepSeekChatModel is not implemented in agentscope-core yet"），必须引入本扩展，
+             以 OpenAIChatModel 对接 OpenAI 兼容服务（DeepSeek / 通义千问等）。 -->
+        <dependency>
+            <groupId>io.agentscope</groupId>
+            <artifactId>agentscope-extensions-model-openai</artifactId>
+            <version>${agentscope.version}</version>
+        </dependency>
+
+        <!-- Lombok：减少样板代码 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- 资源目录不做变量过滤：本项目配置里没有 @..@ 占位符，
+             关闭过滤后插件按纯拷贝方式处理，可避免部分环境下「先过滤再写回」导致的写入失败 -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>application-dev.yml</exclude>
+                </excludes>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dfile.encoding=UTF-8 -javaagent:"${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar"</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

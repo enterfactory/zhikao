@@ -1,0 +1,77 @@
+/**
+ * 少量必要的工具类。
+ *
+ * 刻意保持「少」：工具类一多就会变成另一个样式体系，与 scoped style 打架。
+ * 这里只放两类——**布局容器**与**文本处理**，都是重复率极高、写了不如复用的情况。
+ */
+
+/* ===== 布局 ===== */
+.zk-flex {
+  display: flex;
+}
+.zk-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.zk-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.zk-flex-col {
+  display: flex;
+  flex-direction: column;
+}
+.zk-flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+.zk-gap-1 { gap: var(--zk-space-1); }
+.zk-gap-2 { gap: var(--zk-space-2); }
+.zk-gap-3 { gap: var(--zk-space-3); }
+.zk-gap-4 { gap: var(--zk-space-4); }
+
+/* 自适应栅格：容器变窄自动折行，不需要媒体查询 */
+.zk-grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--zk-space-4);
+}
+
+/* ===== 间距 ===== */
+.zk-mt-2 { margin-top: var(--zk-space-2); }
+.zk-mt-3 { margin-top: var(--zk-space-3); }
+.zk-mt-4 { margin-top: var(--zk-space-4); }
+.zk-mb-3 { margin-bottom: var(--zk-space-3); }
+.zk-mb-4 { margin-bottom: var(--zk-space-4); }
+.zk-ml-2 { margin-left: var(--zk-space-2); }
+.zk-mr-2 { margin-right: var(--zk-space-2); }
+
+/* ===== 文本 ===== */
+.zk-text-primary { color: var(--zk-text-primary); }
+.zk-text-regular { color: var(--zk-text-regular); }
+.zk-text-secondary { color: var(--zk-text-secondary); }
+.zk-text-placeholder { color: var(--zk-text-placeholder); }
+.zk-text-success { color: var(--zk-success); }
+.zk-text-warning { color: var(--zk-warning); }
+.zk-text-danger { color: var(--zk-danger); }
+.zk-text-xs { font-size: var(--zk-font-xs); }
+.zk-text-sm { font-size: var(--zk-font-sm); }
+.zk-text-lg { font-size: var(--zk-font-lg); }
+.zk-font-bold { font-weight: 600; }
+
+/* 单行省略：列表里最常用的一处文本处理 */
+.zk-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 多行省略 */
+.zk-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

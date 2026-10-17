@@ -1,0 +1,145 @@
+/**
+ * 设计 Token —— 全站唯一的「设计决策存放处」。
+ *
+ * 为什么必须有这一层：一期把颜色硬编码在 15 个组件的 scoped style 里，
+ * 想换一个主色要改十几个文件，而且很容易漏。Token 化之后，
+ * 改一处变量即可换肤（主题色切换功能就是靠覆写这几个变量实现的）。
+ *
+ * 命名约定：所有项目变量以 --zk- 前缀，与 Element-Plus 的 --el- 区分开，
+ * 二者在 element.css 里做桥接。
+ */
+
+:root {
+  /* ===== 主色（比 Element 默认的 #409EFF 更沉稳，贴合考试系统的正式感） ===== */
+  --zk-primary: #2f6bff;
+  --zk-primary-hover: #5a8bff;
+  --zk-primary-active: #1f52d6;
+  --zk-primary-light: #eaf0ff;
+  --zk-primary-lighter: #f5f8ff;
+
+  /* ===== 语义色 ===== */
+  --zk-success: #16a34a;
+  --zk-success-light: #e8f7ee;
+  --zk-warning: #f59e0b;
+  --zk-warning-light: #fef5e7;
+  --zk-danger: #dc2626;
+  --zk-danger-light: #fdeaea;
+  --zk-info: #0ea5e9;
+  --zk-info-light: #e8f6fd;
+
+  /* ===== 文字 ===== */
+  --zk-text-primary: #1f2937;
+  --zk-text-regular: #4b5563;
+  --zk-text-secondary: #6b7280;
+  --zk-text-placeholder: #9ca3af;
+  --zk-text-inverse: #ffffff;
+
+  /* ===== 背景 ===== */
+  --zk-bg-page: #f5f7fa;
+  --zk-bg-card: #ffffff;
+  --zk-bg-hover: #f9fafb;
+  --zk-bg-mask: rgba(17, 24, 39, 0.45);
+  --zk-bg-sidebar: #0f1b2d;
+  /* 侧边栏上的次级文字（深色底专用，不随主题变） */
+  --zk-sidebar-text: #b9c4d4;
+  --zk-bg-sidebar-hover: #17263d;
+  --zk-bg-sidebar-active: #1d3050;
+
+  /* ===== 边框 ===== */
+  --zk-border: #e5e7eb;
+  --zk-border-light: #f0f2f5;
+  --zk-border-strong: #d1d5db;
+
+  /* ===== 圆角 =====
+     三期把 lg / xl 往回收了（12/16 → 8/12）。原因很直接：
+     卡片一旦超过 8px 圆角，再配上阴影，就会出现「一屏彩色塑料卡片」的观感——
+     这是 AI 生成后台界面最容易辨认的特征之一。企业后台普遍落在 4–8px，
+     圆角只用来「收边」，不用来「表现」。头像、标签、按钮这类小元素仍可全圆。 */
+  --zk-radius-sm: 4px;
+  --zk-radius-md: 6px;
+  --zk-radius-lg: 8px;
+  --zk-radius-xl: 12px;
+  --zk-radius-round: 999px;
+
+  /* ===== 阴影：三级，对应「静置 / 悬浮 / 弹层」三种层级 =====
+     同样往回收：主体改成「极淡的阴影 + 1px 边框」，靠边框而不是阴影区分层级。
+     阴影只保留给真正浮起的层（下拉、弹窗、抽屉）。 */
+  --zk-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.04);
+  --zk-shadow-md: 0 2px 8px rgba(17, 24, 39, 0.06);
+  --zk-shadow-lg: 0 8px 24px rgba(17, 24, 39, 0.10);
+
+  /* ===== 间距：4 的倍数，避免出现 5px / 7px 这种随手值 ===== */
+  --zk-space-1: 4px;
+  --zk-space-2: 8px;
+  --zk-space-3: 12px;
+  --zk-space-4: 16px;
+  --zk-space-5: 24px;
+  --zk-space-6: 32px;
+  --zk-space-7: 48px;
+
+  /* ===== 字号 ===== */
+  --zk-font-xs: 12px;
+  --zk-font-sm: 13px;
+  --zk-font-base: 14px;
+  --zk-font-md: 16px;
+  --zk-font-lg: 20px;
+  --zk-font-xl: 24px;
+  --zk-font-xxl: 32px;
+
+  /* ===== 动效：时长与缓动统一走 Token，避免各处写 0.2s/200ms 混用 ===== */
+  --zk-duration-fast: 150ms;
+  --zk-duration-base: 250ms;
+  --zk-duration-slow: 400ms;
+  --zk-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --zk-ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== 布局尺寸 ===== */
+  --zk-sidebar-width: 220px;
+  --zk-sidebar-width-collapsed: 64px;
+  --zk-header-height: 56px;
+  --zk-tabbar-height: 40px;
+}
+
+/* ============================================================
+   五期：Portal（学生端）专用 Token
+   ------------------------------------------------------------
+   Console 管理端保持冷灰底 + 小圆角的企业后台观感；
+   学生端改成「纸质暖底 + 大圆角 + 衬线标题」的学习门户观感。
+   两套观感共存于同一主题体系：品牌色仍引用 --zk-primary，
+   顶部换肤在两侧同时生效；学科色不走主题（见 utils/subjectColors.js，
+   学科色必须稳定——学生记住的是「数学是蓝的」，不是「数学是主题色」）。
+   ============================================================ */
+:root {
+  --zk-portal-width: 1220px;
+  --zk-portal-bg: #faf6ee;
+  --zk-portal-bg-deep: #f3ecdf;
+  --zk-portal-card: #ffffff;
+  --zk-portal-ink: #232019;
+  --zk-portal-ink-soft: #5c564a;
+  --zk-portal-muted: #8f887a;
+  --zk-portal-line: #e7dfcf;
+  --zk-portal-radius-lg: 20px;
+  --zk-portal-radius-md: 14px;
+  --zk-portal-shadow-s: 0 1px 2px rgba(35, 32, 25, 0.05), 0 4px 14px rgba(35, 32, 25, 0.06);
+  --zk-portal-shadow-m: 0 2px 4px rgba(35, 32, 25, 0.06), 0 12px 30px rgba(35, 32, 25, 0.1);
+  /* 衬线展示字：视觉稿的「学习台」人格主要靠它。
+     不引 webfont（国内 CDN 不稳、登录首屏不该被字体阻塞），系统宋体族兜底。 */
+  --zk-font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+}
+
+/* ===== 主题色预设：顶部工具栏切换时覆写主色梯度即可换肤 ===== */
+:root[data-theme='green'] {
+  --zk-primary: #10a37f;
+  --zk-primary-hover: #38b89a;
+  --zk-primary-active: #0b7f63;
+  --zk-primary-light: #e6f6f2;
+  --zk-primary-lighter: #f2fbf9;
+}
+
+:root[data-theme='purple'] {
+  --zk-primary: #7c5cff;
+  --zk-primary-hover: #9b83ff;
+  --zk-primary-active: #5f42d9;
+  --zk-primary-light: #f0ecff;
+  --zk-primary-lighter: #f7f5ff;
+}

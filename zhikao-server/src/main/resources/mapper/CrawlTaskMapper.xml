@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhikao.mapper.CrawlTaskMapper">
+ <update id="claim">UPDATE crawl_task SET status='RUNNING',lease_owner=#{token},lease_until=#{until},attempts=attempts+1,started_at=CURRENT_TIMESTAMP
+ WHERE id=#{id} AND attempts&lt;3 AND (status='PENDING' OR (status='RUNNING' AND (lease_until IS NULL OR lease_until&lt;CURRENT_TIMESTAMP)))</update>
+ <update id="fence">UPDATE crawl_task SET lease_until=#{until} WHERE id=#{id} AND lease_owner=#{token} AND status='RUNNING' AND lease_until&gt;=CURRENT_TIMESTAMP</update>
+ <update id="failExhausted">UPDATE crawl_task SET status='FAILED',error='任务重试达到上限，请检查资料或日志',finished_at=CURRENT_TIMESTAMP WHERE attempts&gt;=3 AND status='RUNNING' AND (lease_until IS NULL OR lease_until&lt;CURRENT_TIMESTAMP)</update>
+ <select id="recoverable" resultType="long">SELECT id FROM crawl_task WHERE attempts&lt;3 AND (status='PENDING' OR (status='RUNNING' AND (lease_until IS NULL OR lease_until&lt;CURRENT_TIMESTAMP))) ORDER BY id LIMIT 10</select>
+</mapper>

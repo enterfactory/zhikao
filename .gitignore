@@ -1,0 +1,21 @@
+# Dependencies, build output and runtime files
+**/node_modules/
+**/target/
+**/target.old.*/
+**/dist/
+**/dist.old.*/
+**/.vite/
+**/data/
+**/logs/
+*.log
+*.timestamp-*.mjs
+.env
+.env.*
+!.env.ecs.example
+**/application-dev.yml
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+__pycache__/

@@ -1,0 +1,236 @@
+/**
+ * Element-Plus 主题覆写。
+ *
+ * 策略：把 Element 自己的 --el-* 变量桥接到我们的 --zk-* Token 上，
+ * 而不是覆盖它的每个类选择器——后者在版本升级时极易失效。
+ * 这样「改 Token 一处即可换肤」对 Element 组件同样成立。
+ */
+
+:root {
+  /* 主色梯度 */
+  --el-color-primary: var(--zk-primary);
+  --el-color-primary-light-3: var(--zk-primary-hover);
+  --el-color-primary-light-5: var(--zk-primary-hover);
+  --el-color-primary-light-7: var(--zk-primary-light);
+  --el-color-primary-light-8: var(--zk-primary-light);
+  --el-color-primary-light-9: var(--zk-primary-lighter);
+  --el-color-primary-dark-2: var(--zk-primary-active);
+
+  /* 语义色 */
+  --el-color-success: var(--zk-success);
+  --el-color-success-light-9: var(--zk-success-light);
+  --el-color-warning: var(--zk-warning);
+  --el-color-warning-light-9: var(--zk-warning-light);
+  --el-color-danger: var(--zk-danger);
+  --el-color-danger-light-9: var(--zk-danger-light);
+  --el-color-error: var(--zk-danger);
+  --el-color-info: var(--zk-text-secondary);
+  --el-color-info-light-9: var(--zk-bg-hover);
+
+  /* 文字 */
+  --el-text-color-primary: var(--zk-text-primary);
+  --el-text-color-regular: var(--zk-text-regular);
+  --el-text-color-secondary: var(--zk-text-secondary);
+  --el-text-color-placeholder: var(--zk-text-placeholder);
+
+  /* 边框与背景 */
+  --el-border-color: var(--zk-border);
+  --el-border-color-light: var(--zk-border-light);
+  --el-border-color-lighter: var(--zk-border-light);
+  --el-fill-color-blank: var(--zk-bg-card);
+  --el-bg-color: var(--zk-bg-card);
+  --el-bg-color-page: var(--zk-bg-page);
+
+  /* 圆角 */
+  --el-border-radius-base: var(--zk-radius-md);
+  --el-border-radius-small: var(--zk-radius-sm);
+
+  /* 字体 */
+  --el-font-size-base: var(--zk-font-base);
+}
+
+/* ===== 少量结构性微调（不改 Element 的交互与可访问性） ===== */
+
+/* 卡片：统一圆角 + 弱阴影，替代默认的纯边框观感 */
+.el-card {
+  border: 1px solid var(--zk-border-light);
+  border-radius: var(--zk-radius-lg);
+  box-shadow: var(--zk-shadow-sm) !important;
+  transition: box-shadow var(--zk-duration-base) var(--zk-ease);
+}
+
+.el-card:hover {
+  box-shadow: var(--zk-shadow-md) !important;
+}
+
+.el-card__header {
+  border-bottom: 1px solid var(--zk-border-light);
+  font-weight: 600;
+}
+
+/* 表格：去掉外框、表头浅底，让数据更突出 */
+.el-table {
+  --el-table-border-color: var(--zk-border-light);
+  --el-table-header-bg-color: var(--zk-bg-hover);
+  --el-table-row-hover-bg-color: var(--zk-primary-lighter);
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--zk-text-regular);
+}
+
+/* 表格行 hover：**只用背景色反馈，绝不做位移**。
+   原来这里是 transform: translateY(-1px)，鼠标横扫页面时整片抖动（用户反馈的「抽搐」）。
+   成因是两条叠加的：
+   1. 行上移 1px 后，光标所在的实际上变成了上一行 → hover 立刻失效 → 行回位 → 再次命中，
+      形成自激振荡；行高越矮（后台现在是紧凑行高）越容易触发。
+   2. transform 会让 el-table 里 position: sticky 的 fixed="right" 操作列失效并重排，
+      所以带固定列的表格抖得最明显。
+   背景色过渡保留下来，悬浮反馈不丢，但没有几何变化，也就没有抖动。 */
+.el-table td.el-table__cell,
+.el-table th.el-table__cell {
+  transition: background-color var(--zk-duration-fast) var(--zk-ease);
+}
+
+/* 按钮：过渡只作用于颜色与位移，不做尺寸动画 */
+.el-button {
+  transition: color var(--zk-duration-fast) var(--zk-ease),
+    background-color var(--zk-duration-fast) var(--zk-ease),
+    border-color var(--zk-duration-fast) var(--zk-ease),
+    transform var(--zk-duration-fast) var(--zk-ease);
+}
+
+.el-button:active:not(.is-disabled) {
+  transform: scale(0.98);
+}
+
+/* 对话框：只保留圆角，入场动画交给 Element 自带的 dialog-fade-in。
+   这里原先还给 .el-overlay-dialog 加淡入、给 .el-dialog__body 加回弹缩放，
+   两套动画叠加就是「弹窗先出现一下、内容再弹一次」的观感来源（body 单独缩放，
+   表头表脚却不动，看起来像二次显示）。全局规则，所以每个页面的弹窗都受影响。 */
+.el-dialog {
+  border-radius: var(--zk-radius-lg);
+}
+
+/* 分页统一右对齐 */
+.el-pagination {
+  justify-content: flex-end;
+}
+
+/* 标签：圆角胶囊，弱化描边 */
+.el-tag {
+  border-radius: var(--zk-radius-round);
+  font-weight: 500;
+}
+
+/* 输入框聚焦时的过渡 */
+.el-input__wrapper,
+.el-textarea__inner {
+  transition: box-shadow var(--zk-duration-fast) var(--zk-ease);
+}
+
+/* ============================================================
+   后台密度：紧凑企业风（只作用于 Console 壳）
+   ------------------------------------------------------------
+   为什么按壳层作用域而不是全站：学生门户要的是「纸质、宽松」的阅读观感，
+   后台要的是「一屏看得多、扫得快」。两种密度共用一套 Token，但字号与
+   行高必须分家，否则改一处就同时把两端带偏。
+
+   这里的规则对**尚未迁移到 ZkDialog / FilterBar 的老页面同样生效**，
+   所以不必等 16 个页面全改完才能看到统一效果；等全部页面收口后，
+   弹窗那几条会和 ZkDialog 内部的重复，届时删掉本块的 dialog 部分即可。
+   ============================================================ */
+
+/* 表格：13px + 收紧行高。14px 的表格在 1080p 上一屏只能看 12 行 */
+.layout--console .el-table {
+  font-size: var(--zk-font-sm);
+}
+
+.layout--console .el-table th.el-table__cell,
+.layout--console .el-table td.el-table__cell {
+  padding: var(--zk-space-1) 0;
+}
+
+.layout--console .el-table .cell {
+  padding-left: var(--zk-space-3);
+  padding-right: var(--zk-space-3);
+  line-height: 1.6;
+}
+
+.layout--console .el-table th.el-table__cell {
+  font-size: var(--zk-font-sm);
+  color: var(--zk-text-secondary);
+}
+
+/* 表单：label 用次级色、字号降一档，让控件本身成为视觉主体 */
+.layout--console .el-form-item {
+  margin-bottom: var(--zk-space-4);
+}
+
+.layout--console .el-form-item__label {
+  font-size: var(--zk-font-sm);
+  color: var(--zk-text-secondary);
+  padding-right: var(--zk-space-2);
+}
+
+/* 弹窗：头尾加分隔线，正文单独滚动 */
+.layout--console .el-dialog {
+  --el-dialog-padding-primary: var(--zk-space-4);
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100vw - var(--zk-space-6));
+}
+
+.layout--console .el-dialog__header {
+  margin-right: 0;
+  padding-bottom: var(--zk-space-3);
+  border-bottom: 1px solid var(--zk-border-light);
+}
+
+.layout--console .el-dialog__title {
+  font-size: var(--zk-font-base);
+  font-weight: 600;
+  color: var(--zk-text-primary);
+}
+
+.layout--console .el-dialog__body {
+  padding-bottom: var(--zk-space-4);
+  font-size: var(--zk-font-base);
+  color: var(--zk-text-regular);
+}
+
+.layout--console .el-dialog__footer {
+  padding-top: var(--zk-space-3);
+  border-top: 1px solid var(--zk-border-light);
+}
+
+/* 抽屉同理：头尾分隔，正文由 Element 自己滚动 */
+.layout--console .el-drawer {
+  --el-drawer-padding-primary: var(--zk-space-4);
+}
+
+.layout--console .el-drawer__header {
+  margin-bottom: 0;
+  padding-bottom: var(--zk-space-3);
+  border-bottom: 1px solid var(--zk-border-light);
+}
+
+.layout--console .el-drawer__title {
+  font-size: var(--zk-font-base);
+  font-weight: 600;
+  color: var(--zk-text-primary);
+}
+
+/* 二次确认框：危险动作的确认按钮标红（confirmAction 里挂的类名） */
+.el-message-box__btns .zk-confirm__danger {
+  background: var(--zk-danger);
+  border-color: var(--zk-danger);
+}
+
+.el-message-box__btns .zk-confirm__danger:hover {
+  background: var(--zk-danger);
+  border-color: var(--zk-danger);
+  opacity: 0.88;
+}
+
